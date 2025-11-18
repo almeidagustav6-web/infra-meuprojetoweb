@@ -1,0 +1,6 @@
+{
+  "scripts": {
+    "build": "echo 'build step here'",
+    "test": "echo 'run tests here'"
+  }
+}
