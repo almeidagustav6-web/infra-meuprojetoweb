@@ -8,8 +8,8 @@ trigger:
       - app/*
 
 variables:
-  azureServiceConnection: 'AzureConnection'
-  resourceGroup: 'rg-meuprojetoweb-dev'
+  azureServiceConnection: 'AzureConnection'   # nome da Service Connection criada no Azure DevOps
+  resourceGroup: 'rg-meuprojetoweb-dev'       # ajuste para o seu RG real
   location: 'Brazil South'
 
 stages:
@@ -28,7 +28,29 @@ stages:
         terraform apply -auto-approve
       displayName: 'Terraform Apply'
 
+    - task: NodeTool@0
+      displayName: 'Setup Node.js'
+      inputs:
+        versionSpec: '20.x'
+
+    - script: |
+        cd app
+        npm ci --cache .npm --prefer-offline
+      displayName: 'Install dependencies (usando package-lock.json)'
+      workingDirectory: app
+
+    - script: |
+        cd app
+        npm run build
+      displayName: 'Build App'
+
+    - script: |
+        cd app
+        npm test --if-present
+      displayName: 'Run Tests'
+
     - task: AzureWebApp@1
+      displayName: 'Deploy Node App to Azure WebApp (Dev)'
       inputs:
         azureSubscription: $(azureServiceConnection)
         appName: 'node-meuprojetoweb-dev'
@@ -48,6 +70,7 @@ stages:
         deploy:
           steps:
           - script: echo "Aprovação HML necessária"
+            displayName: 'Gate de aprovação HML'
 
 - stage: Prod
   displayName: Produção
@@ -61,3 +84,5 @@ stages:
         deploy:
           steps:
           - script: echo "Aprovação PROD necessária"
+            displayName: 'Gate de aprovação PROD'
+
